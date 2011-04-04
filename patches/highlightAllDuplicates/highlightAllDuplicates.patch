@@ -1,0 +1,125 @@
+Index: src/tests/com/puppycrawl/tools/checkstyle/checks/coding/MultipleStringLiteralsCheckTest.java
+===================================================================
+--- src/tests/com/puppycrawl/tools/checkstyle/checks/coding/MultipleStringLiteralsCheckTest.java	(revision 2587)
++++ src/tests/com/puppycrawl/tools/checkstyle/checks/coding/MultipleStringLiteralsCheckTest.java	(working copy)
+@@ -14,6 +14,7 @@
+             createCheckConfig(MultipleStringLiteralsCheck.class);
+         checkConfig.addAttribute("allowedDuplicates", "2");
+         checkConfig.addAttribute("ignoreStringsRegexp", "");
++        checkConfig.addAttribute("highlightAllDuplicates", "false");
+ 
+         final String[] expected = {
+             "5:16: The String \"StringContents\" appears 3 times in the file.",
+@@ -25,6 +26,31 @@
+                getPath("coding" + File.separator + "InputMultipleStringLiterals.java"),
+                expected);
+     }
++	
++	@Test
++	public void testItAndShowAllWarnings() 
++		throws Exception 
++	{
++		DefaultConfiguration checkConfig = createCheckConfig(MultipleStringLiteralsCheck.class);
++		checkConfig.addAttribute("allowedDuplicates", "2");
++		checkConfig.addAttribute("ignoreStringsRegexp", "");
++		checkConfig.addAttribute("highlightAllDuplicates", "true");
++		
++		final String[] expected = {
++				"5:16: The String \"StringContents\" appears 3 times in the file.",
++				"8:17: The String \"\" appears 4 times in the file.",
++				"8:22: The String \"\" appears 4 times in the file.",
++				"9:17: The String \"\" appears 4 times in the file.",
++				"9:22: The String \"\" appears 4 times in the file.",
++				"10:23: The String \", \" appears 3 times in the file.",
++				"10:30: The String \", \" appears 3 times in the file.",
++				"10:37: The String \", \" appears 3 times in the file.",
++				"13:21: The String \"StringContents\" appears 3 times in the file.",
++				"14:28: The String \"StringContents\" appears 3 times in the file.",};
++		
++		verify(checkConfig, getPath("coding" + File.separator
++				+ "InputMultipleStringLiterals.java"), expected);
++	}
+ 
+     @Test
+     public void testItIgnoreEmpty() throws Exception
+@@ -32,6 +58,7 @@
+         DefaultConfiguration checkConfig =
+             createCheckConfig(MultipleStringLiteralsCheck.class);
+         checkConfig.addAttribute("allowedDuplicates", "2");
++        checkConfig.addAttribute("highlightAllDuplicates", "false");
+ 
+         final String[] expected = {
+             "5:16: The String \"StringContents\" appears 3 times in the file.",
+@@ -50,7 +77,8 @@
+             createCheckConfig(MultipleStringLiteralsCheck.class);
+         checkConfig.addAttribute("allowedDuplicates", "2");
+         checkConfig.addAttribute("ignoreStringsRegexp", "^((\"\")|(\", \"))$");
+-
++        checkConfig.addAttribute("highlightAllDuplicates", "false");
++        
+         final String[] expected = {
+             "5:16: The String \"StringContents\" appears 3 times in the file.",
+         };
+@@ -67,6 +95,7 @@
+             createCheckConfig(MultipleStringLiteralsCheck.class);
+         checkConfig.addAttribute("allowedDuplicates", "3");
+         checkConfig.addAttribute("ignoreOccurrenceContext", "");
++        checkConfig.addAttribute("highlightAllDuplicates", "false");
+ 
+         final String[] expected = {
+             "19:23: The String \"unchecked\" appears 4 times in the file.",
+Index: src/checkstyle/com/puppycrawl/tools/checkstyle/checks/coding/MultipleStringLiteralsCheck.java
+===================================================================
+--- src/checkstyle/com/puppycrawl/tools/checkstyle/checks/coding/MultipleStringLiteralsCheck.java	(revision 2587)
++++ src/checkstyle/com/puppycrawl/tools/checkstyle/checks/coding/MultipleStringLiteralsCheck.java	(working copy)
+@@ -56,6 +56,11 @@
+     private int mAllowedDuplicates = 1;
+ 
+     /**
++     * Highlight all duplicates in a file if set true
++     */
++    private boolean mHighlightAllDuplicates = true;
++
++    /**
+      * Sets the maximum allowed duplicates of a string.
+      * @param aAllowedDuplicates The maximum number of duplicates.
+      */
+@@ -95,6 +100,16 @@
+     }
+ 
+     /**
++     * Sets highlight for all duplicates or only first.
++     * @param aHighlightAllDuplicates if true show all duplicates
++     */
++    public final void setHighlightAllDuplicates(
++    final boolean aHighlightAllDuplicates)
++    {
++        mHighlightAllDuplicates = aHighlightAllDuplicates;
++    }
++
++    /**
+      * Adds a set of tokens the check is interested in.
+      * @param aStrRep the string representation of the tokens interested in
+      */
+@@ -168,10 +183,17 @@
+         for (String key : keys) {
+             final List<StringInfo> hits = mStringMap.get(key);
+             if (hits.size() > mAllowedDuplicates) {
+-                final StringInfo firstFinding = hits.get(0);
+-                final int line = firstFinding.getLine();
+-                final int col = firstFinding.getCol();
+-                log(line, col, "multiple.string.literal", key, hits.size());
++                int hitsSize = 1;
++                if (mHighlightAllDuplicates) {
++                    hitsSize = hits.size();
++                }
++                for (int index = 0; index < hitsSize; index++) {
++                    final StringInfo firstFinding = hits.get(index);
++                    final int line = firstFinding.getLine();
++                    final int col = firstFinding.getCol();
++                    log(line, col,
++                            "multiple.string.literal", key, hits.size());
++                }
+             }
+         }
+     }
