@@ -1,0 +1,386 @@
+Index: src/testinputs/com/puppycrawl/tools/checkstyle/coding/testUBV.java
+===================================================================
+--- src/testinputs/com/puppycrawl/tools/checkstyle/coding/testUBV.java	(revision 0)
++++ src/testinputs/com/puppycrawl/tools/checkstyle/coding/testUBV.java	(revision 0)
+@@ -0,0 +1,132 @@
++public class InputUnnecessaryParentheses {
++    int f1() {
++        int x = 0;
++        for (int i = (0+1); ((i) < (6+6)); i += (1+0)) {
++            x += (i + 100);
++            (x) += (i + 100);
++            x = (x + i + 100);
++            (x) = (x + i + 100);
++        }
++
++        for (int i = (0+1); (i) < ((6+6)); i += (1+0)) {
++            System.out.println("hi");
++        }
++
++        return (0);
++    }
++
++    private int f2(int arg1, double arg2) {
++        int x, a, b, c, d;
++        String e, f;
++
++        x = 0;
++        a = 0;
++        b = 0;
++        c = (a + b);
++        d = c - 1;
++
++        int i = (int) arg2;
++        i = ((int) arg2);
++
++        x += (i + 100 + arg1);
++        a = (a + b) * (c + d);
++        b = ((((a + b) * (c + d))));
++        c = (((a) <= b)) ? 0 : 1;
++        d = (a) + (b) * (600) / (int) (12.5f) + (int) (arg2);
++        e = ("this") + ("that") + ("is" + "other");
++        f = ("this is a really, really long string that should be truncated.");
++
++        return (x + a + b + d);
++    }
++
++    private boolean f3() {
++        int x = f2((1), (13.5));
++        boolean b = (true);
++        return (b);
++    }
++
++    public static int f4(int z, int a) {
++        int r = (z * a);
++        r = (a > z) ? a : z;
++        r = ((a > z) ? a : z);
++        r = (a > z) ? a : (z + z);
++        return (r * r - 1);
++    }
++
++    public void f5() {
++        int x, y;
++        x = 0;
++        y = 0;
++        if (x == y) {
++            print(x);
++        }
++        if ((x > y)) {
++            print(y);
++        }
++
++        while ((x < 10)) {
++            print(x++);
++        }
++
++        do {
++            print((y+=100));
++        } while (y < (4000));
++    }
++
++    private void f6(TypeA a) {
++        TypeB b = (TypeB) a;
++        TypeC c = ((TypeC) a);
++        int r = 12345;
++        r <<= (3);
++        TypeD<String> d = ((TypeD<String>) a);
++    }
++
++    private void print(int arg)
++    {
++        System.out.println("arg = " + arg);
++    }
++    
++    boolean f7(boolean f) {
++		boolean a=true;
++		boolean b = (a != f);
++		b = (a == f);
++		b = a == f;
++		f = 2 == 3;
++		f = (2 >= 3);
++		f = b != true;
++		f = (f != b);
++		assert (firstOnPage == 1);
++		if(f)
++		{
++			return b = ( b != f );
++		}
++		else
++		{
++			return f != d;
++		}
++    	}
++
++    boolean test (int y, boolean flag, TypeA x)	{
++		boolean b = (x == null);
++		if(flag != (y == 0))
++		{
++			return (tradename == null && company == null);
++		}
++		else
++		{
++			return (flag != b);
++		}
++		b = (LifeCycleEntityHelper.isDiscontinuedNow(officer) || LifeCycleEntityHelper.isDiscontinuedNow(officer.getCompany()));
++		return (b == c) != (2 < 3);
++		
++	}
++    
++    
++    
++    
++
++    static class TypeA {}
++    static class TypeB extends TypeA {}
++    static class TypeC extends TypeA {}
++    static class TypeD<T> extends TypeA {}
++}
+Index: src/tests/com/puppycrawl/tools/checkstyle/checks/coding/UnnecessaryParenthesesCheckTest.java
+===================================================================
+--- src/tests/com/puppycrawl/tools/checkstyle/checks/coding/UnnecessaryParenthesesCheckTest.java	(revision 2587)
++++ src/tests/com/puppycrawl/tools/checkstyle/checks/coding/UnnecessaryParenthesesCheckTest.java	(working copy)
+@@ -7,7 +7,6 @@
+ 
+ /**
+  * Test fixture for the UnnecessaryParenthesesCheck.
+- *
+  * @author  Eric K. Roe
+  */
+ public class UnnecessaryParenthesesCheckTest extends BaseCheckTestSupport
+@@ -20,7 +19,9 @@
+     {
+         final DefaultConfiguration checkConfig =
+             createCheckConfig(UnnecessaryParenthesesCheck.class);
+-
++        checkConfig.addAttribute("ignoreCalculationOfBooleanVariables", "false");
++        checkConfig.addAttribute("ignoreCalculationOfBooleanVariablesWithReturn", "false");
++        checkConfig.addAttribute("ignoreCalculationOfBooleanVariablesWithAssert", "false");
+         final String[] expected = {
+             "4:22: Unnecessary parentheses around assignment right-hand side.",
+             "4:29: Unnecessary parentheses around expression.",
+@@ -76,6 +77,65 @@
+     {
+         final DefaultConfiguration checkConfig = createCheckConfig(UnnecessaryParenthesesCheck.class);
+         final String[] expected = {};
++        checkConfig.addAttribute("ignoreCalculationOfBooleanVariables", "false");
++        checkConfig.addAttribute("ignoreCalculationOfBooleanVariablesWithReturn", "false");
++        checkConfig.addAttribute("ignoreCalculationOfBooleanVariablesWithAssert", "false");
+         verify(checkConfig, getPath("Input15Extensions.java"), expected);
+     }
++    
++    @Test
++    public void testUBV() throws Exception
++    {
++        final DefaultConfiguration checkConfig = createCheckConfig(UnnecessaryParenthesesCheck.class);
++        final String[] expected = {           
++        		"4:22: Unnecessary parentheses around assignment right-hand side.",
++                "4:29: Unnecessary parentheses around expression.",
++                "4:31: Unnecessary parentheses around identifier 'i'.",
++                "4:46: Unnecessary parentheses around assignment right-hand side.",
++                "5:15: Unnecessary parentheses around assignment right-hand side.",
++                "6:14: Unnecessary parentheses around identifier 'x'.",
++                "6:17: Unnecessary parentheses around assignment right-hand side.",
++                "7:15: Unnecessary parentheses around assignment right-hand side.",
++                "8:14: Unnecessary parentheses around identifier 'x'.",
++                "8:17: Unnecessary parentheses around assignment right-hand side.",
++                "11:22: Unnecessary parentheses around assignment right-hand side.",
++                "11:30: Unnecessary parentheses around identifier 'i'.",
++                "11:46: Unnecessary parentheses around assignment right-hand side.",
++                "15:17: Unnecessary parentheses around literal '0'.",
++                "25:11: Unnecessary parentheses around assignment right-hand side.",
++                "29:11: Unnecessary parentheses around assignment right-hand side.",
++                "31:11: Unnecessary parentheses around assignment right-hand side.",
++                "33:11: Unnecessary parentheses around assignment right-hand side.",
++                "34:16: Unnecessary parentheses around identifier 'a'.",
++                "35:14: Unnecessary parentheses around identifier 'a'.",
++                "35:20: Unnecessary parentheses around identifier 'b'.",
++                "35:26: Unnecessary parentheses around literal '600'.",
++                "35:40: Unnecessary parentheses around literal '12.5f'.",
++                "35:56: Unnecessary parentheses around identifier 'arg2'.",
++                "36:14: Unnecessary parentheses around string \"this\".",
++                "36:25: Unnecessary parentheses around string \"that\".",
++                "37:11: Unnecessary parentheses around assignment right-hand side.",
++                "37:14: Unnecessary parentheses around string \"this is a really, really...\".",
++                "39:16: Unnecessary parentheses around return value.",
++                "43:21: Unnecessary parentheses around literal '1'.",
++                "43:26: Unnecessary parentheses around literal '13.5'.",
++                "44:22: Unnecessary parentheses around literal 'true'.",
++                "45:17: Unnecessary parentheses around identifier 'b'.",
++                "49:17: Unnecessary parentheses around assignment right-hand side.",
++                "51:11: Unnecessary parentheses around assignment right-hand side.",
++                "53:16: Unnecessary parentheses around return value.",
++                "63:13: Unnecessary parentheses around expression.",
++                "67:16: Unnecessary parentheses around expression.",
++                "72:19: Unnecessary parentheses around expression.",
++                "73:23: Unnecessary parentheses around literal '4000'.",
++                "78:19: Unnecessary parentheses around assignment right-hand side.",
++                "80:11: Unnecessary parentheses around assignment right-hand side.",
++                "80:16: Unnecessary parentheses around literal '3'.",
++                "81:27: Unnecessary parentheses around assignment right-hand side.",
++                "95:19: Unnecessary parentheses around assignment right-hand side.",};
++        checkConfig.addAttribute("ignoreCalculationOfBooleanVariables", "true");
++        checkConfig.addAttribute("ignoreCalculationOfBooleanVariablesWithReturn", "true");
++        checkConfig.addAttribute("ignoreCalculationOfBooleanVariablesWithAssert", "true");
++        verify(checkConfig, getPath("coding"+File.separator+"testUBV.java"), expected);
++    }
+ }
+Index: src/checkstyle/com/puppycrawl/tools/checkstyle/checks/coding/UnnecessaryParenthesesCheck.java
+===================================================================
+--- src/checkstyle/com/puppycrawl/tools/checkstyle/checks/coding/UnnecessaryParenthesesCheck.java	(revision 2587)
++++ src/checkstyle/com/puppycrawl/tools/checkstyle/checks/coding/UnnecessaryParenthesesCheck.java	(working copy)
+@@ -50,6 +50,7 @@
+  * </p>
+  *
+  * @author Eric Roe
++ * @author Antonenko Dmitriy
+  */
+ public class UnnecessaryParenthesesCheck extends Check
+ {
+@@ -57,6 +58,15 @@
+     private static final int MIN_CHILDREN_FOR_MATCH = 3;
+     /** The maximum string length before we chop the string. */
+     private static final int MAX_QUOTED_LENGTH = 25;
++    /** Used to ignore unnecessary parentheses check
++     *  in calculation of boolean. */
++    private boolean mIgnoreCalculationOfBooleanVariables;
++    /** Used to ignore unnecessary parentheses check
++     *  in calculation of boolean with return state. */
++    private boolean mIgnoreCalculationOfBooleanVariablesWithReturn;
++    /** Used to ignore unnecessary parentheses check
++     *  in calculation of boolean with assert state. */
++    private boolean mIgnoreCalculationOfBooleanVariablesWithAssert;
+ 
+     /** Token types for literals. */
+     private static final int [] LITERALS = {
+@@ -86,6 +96,15 @@
+         TokenTypes.STAR_ASSIGN,
+     };
+ 
++    /** Token types equals operations. */
++    private static final int[] EQUALS = {
++        TokenTypes.EQUAL,
++        TokenTypes.NOT_EQUAL,
++        TokenTypes.LOR,
++        TokenTypes.LAND,
++        TokenTypes.BOR,
++    };
++
+     /**
+      * Used to test if logging a warning in a parent node may be skipped
+      * because a warning was already logged on an immediate child node.
+@@ -162,7 +181,15 @@
+             mAssignDepth++;
+             final DetailAST last = aAST.getLastChild();
+             if (last.getType() == TokenTypes.RPAREN) {
+-                log(aAST, "unnecessary.paren.assign");
++                final DetailAST subtree = aAST.getFirstChild().getNextSibling()
++                    .getNextSibling();
++                final int subtreeType = subtree.getType();
++                if (!(mIgnoreCalculationOfBooleanVariables && inTokenList(
++                    subtreeType, EQUALS)))
++                {
++                    log(aAST, "unnecessary.paren.assign");
++                }
++
+             }
+         }
+     }
+@@ -189,15 +216,36 @@
+ 
+             if ((mParentToSkip != aAST) && exprSurrounded(aAST)) {
+                 if (mAssignDepth >= 1) {
+-                    log(aAST, "unnecessary.paren.assign");
++                    if (!(mIgnoreCalculationOfBooleanVariables && inTokenList(
++                        subtreeType(aAST), EQUALS)))
++                    {
++                        log(aAST, "unnecessary.paren.assign");
++                    }
+                 }
+                 else if (aAST.getParent().getType()
+                     == TokenTypes.LITERAL_RETURN)
+                 {
+-                    log(aAST, "unnecessary.paren.return");
++                    if (!(mIgnoreCalculationOfBooleanVariablesWithReturn
++                            && inTokenList(subtreeType(aAST), EQUALS)))
++                    {
++                        log(aAST, "unnecessary.paren.return");
++                    }
+                 }
++                else if (aAST.getParent().getType()
++                        == TokenTypes.LITERAL_ASSERT)
++                {
++                    if (!(mIgnoreCalculationOfBooleanVariablesWithAssert
++                            && inTokenList(subtreeType(aAST), EQUALS)))
++                    {
++                        log(aAST, "unnecessary.paren.expr");
++                    }
++                }
+                 else {
+-                    log(aAST, "unnecessary.paren.expr");
++                    if (!(mIgnoreCalculationOfBooleanVariables && inTokenList(
++                        subtreeType(aAST), EQUALS)))
++                    {
++                        log(aAST, "unnecessary.paren.expr");
++                    }
+                 }
+             }
+ 
+@@ -289,4 +337,58 @@
+         }
+         return aString;
+     }
++
++    /**
++     * Returns the type of the subtree, witch need to detect equals
++     * in boolean calculation.
++     * @param aAST the <code>DetailAST</code>
++     * @return integer value of subtree
++     */
++    private int subtreeType(DetailAST aAST)
++    {
++        final DetailAST subtree = aAST.getFirstChild()
++            .getNextSibling();
++        return subtree.getType();
++    }
++
++    /**
++     * Sets flag to IgnoreCalculationOfBooleanVariables.
++     *
++     * @param aIgnoreCalculationOfBooleanVariables
++     *            if true ignore unnecessary parentheses check in calculation of
++     *            boolean.
++     */
++
++    public final void setIgnoreCalculationOfBooleanVariables(
++            final boolean aIgnoreCalculationOfBooleanVariables)
++    {
++        mIgnoreCalculationOfBooleanVariables =
++            aIgnoreCalculationOfBooleanVariables;
++    }
++    /**
++     * Sets flag to IgnoreCalculationOfBooleanVariablesWithReturn.
++     *
++     * @param aIgnoreCalculationOfBooleanVariablesWithReturn
++     *            if true ignore unnecessary parentheses check in calculation of
++     *            boolean with return state.
++     */
++    public final void setIgnoreCalculationOfBooleanVariablesWithReturn(
++            final boolean aIgnoreCalculationOfBooleanVariablesWithReturn)
++    {
++        mIgnoreCalculationOfBooleanVariablesWithReturn =
++            aIgnoreCalculationOfBooleanVariablesWithReturn;
++    }
++    /**
++     * Sets flag to IgnoreCalculationOfBooleanVariablesWithAssert.
++     *
++     * @param aIgnoreCalculationOfBooleanVariablesWithAssert
++     *            if true ignore unnecessary parentheses check in calculation of
++     *            boolean with assert state
++     */
++    public final void setIgnoreCalculationOfBooleanVariablesWithAssert(
++            final boolean aIgnoreCalculationOfBooleanVariablesWithAssert)
++    {
++        mIgnoreCalculationOfBooleanVariablesWithAssert =
++            aIgnoreCalculationOfBooleanVariablesWithAssert;
++    }
+ }
